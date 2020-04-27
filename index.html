@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Mini Messenger Service</title>
+
+    <style>
+        p {
+            vertical-align: text-top;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>Url requests</h1>
+    <table>
+        <tr>
+            <td>
+                <p>[serveraddress]/</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>Website Mini Messenger Service information</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/getOnlineUser?userid=[user id]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>get all online users</p>
+                <p>get username, user id and online state.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/getMessenges?userid=[user id]&touserid=[user id from contact]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>get chat messages</p>
+<p>get sendet message from self and from other user</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/AddUser?username=[new or exist username]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>add new user</p>
+                <p>response the username und user id</p>
+                <p>if user exist, </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/sendMessage?userid=[user id]&touserid=[user id from contact]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>send a message to other target user</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/deviceSendCommand?deviceid=[device id]&value=[set value]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>send a value to target device</p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/deviceGetValue?deviceid=[device id]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>get the value for device.</p>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
