@@ -35,6 +35,7 @@ type MessageItem struct {
 type DeviceItem struct {
 	ID    int64
 	Value int64
+	Text  string
 }
 
 // ResponseError = Error message
@@ -77,8 +78,10 @@ type ResponseSendMessages struct {
 // ResponseDevice = only for flat structure
 type ResponseDevice struct {
 	Success bool
+	ID      int64
 	Content string
 	Value   int64
+	Text    string
 }
 
 // ResponseDevices = response all devices
@@ -181,7 +184,7 @@ func webserviceHandler(w http.ResponseWriter, r *http.Request) {
 
 	// prevent the two time call
 	// TODO: How can it do better?
-	if command == "favicon.ico" {
+	if command == "/favicon.ico" {
 		return
 	}
 
@@ -196,9 +199,10 @@ func webserviceHandler(w http.ResponseWriter, r *http.Request) {
 	username := r.URL.Query().Get("username")
 	messageText := r.URL.Query().Get("messagetext")
 	valueStr := r.URL.Query().Get("value")
-	fmt.Println(fmt.Sprintf("received: %s %s %s %s", userID, toUserID, username, messageText))
+	textStr := r.URL.Query().Get("text")
+	fmt.Println(fmt.Sprintf("received: %s %s %s %s %s %s", userID, toUserID, username, messageText, valueStr, textStr))
 
-	jsonResult := getJSONnResult(command, userID, toUserID, username, messageText, valueStr)
+	jsonResult := getJSONnResult(command, userID, toUserID, username, messageText, valueStr, textStr)
 
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
@@ -223,7 +227,7 @@ func getWebsite() string {
 // --------------------------------------------------------------------
 // PARAMETERS
 // command = parameter from the url request
-func getJSONnResult(command string, id string, toUserID string, username string, messageText string, valueStr string) string {
+func getJSONnResult(command string, idStr string, toUserID string, username string, messageText string, valueStr string, textStr string) string {
 
 	if command == "" {
 		return "error"
@@ -237,36 +241,17 @@ func getJSONnResult(command string, id string, toUserID string, username string,
 	switch command {
 	case "/getAllUsers":
 		{
-			users := getOnlineUser(id)
+			users := getOnlineUser(idStr)
 			response := ResponseGetUsers{Success: true, Content: users}
 			result, err = json.Marshal(&response)
 			break
 		}
 	case "/getMessages":
 		{
-			messages := getMessages(id, toUserID)
-
-			if id != "3" {
-
-				fmt.Println("- NORMAL Get MESSAGES")
-				response := ResponseGetMessages{Success: true, Content: messages}
-				result, err = json.Marshal(&response)
-			} else {
-
-				fmt.Println("- Get MESSAGE")
-
-				var text string
-				if len(messages) == 0 {
-					fmt.Println("- NO MESSAGE")
-					text = "Keine Daten"
-				} else {
-
-					fmt.Println(fmt.Sprintf("- MESSAGE: %v", len(messages)))
-					text = messages[0].Text
-				}
-				response := ResponseGetMessage{Success: true, Content: text}
-				result, err = json.Marshal(&response)
-			}
+			messages := getMessages(idStr, toUserID)
+			fmt.Println("- NORMAL Get MESSAGES")
+			response := ResponseGetMessages{Success: true, Content: messages}
+			result, err = json.Marshal(&response)
 			break
 		}
 	case "/addUser":
@@ -278,7 +263,7 @@ func getJSONnResult(command string, id string, toUserID string, username string,
 		}
 	case "/sendMessage":
 		{
-			message := sendMessage(id, toUserID, messageText)
+			message := sendMessage(idStr, toUserID, messageText)
 			response := ResponseSendMessages{Success: true, Content: message}
 			result, err = json.Marshal(&response)
 			break
@@ -292,22 +277,36 @@ func getJSONnResult(command string, id string, toUserID string, username string,
 		}
 	case "/deviceSendCommand":
 		{
-			message := deviceSendCommand(id, valueStr)
-			response := ResponseDevice{Success: true, Content: message, Value: 0}
+			message, id, valueRe := deviceSendCommand(idStr, valueStr, textStr)
+			response := ResponseDevice{Success: true, ID: id, Content: message, Value: valueRe, Text: textStr}
 			result, err = json.Marshal(&response)
 			break
 		}
 	case "/deviceGetValue":
 		{
-			message, value := deviceGetValue(id)
-			response := ResponseDevice{Success: true, Content: message, Value: value}
+			message, id, value := deviceGetValue(idStr)
+			response := ResponseDevice{Success: true, ID: id, Content: message, Value: value}
+			result, err = json.Marshal(&response)
+			break
+		}
+	case "/deviceGetText":
+		{
+			message, id, value := deviceGetText(idStr)
+			response := ResponseDevice{Success: true, ID: id, Content: message, Text: value}
+			result, err = json.Marshal(&response)
+			break
+		}
+	case "/deviceGet":
+		{
+			message, id, value, text := deviceGet(idStr)
+			response := ResponseDevice{Success: true, ID: id, Content: message, Value: value, Text: text}
 			result, err = json.Marshal(&response)
 			break
 		}
 	default:
 		{
 			errorMessage := fmt.Sprintf("no case for this command: %s", command)
-			fmt.Printf(errorMessage)
+			fmt.Println(errorMessage)
 			response := ResponseError{Success: false, Content: errorMessage}
 			result, err = json.Marshal(&response)
 			break
@@ -322,7 +321,7 @@ func getJSONnResult(command string, id string, toUserID string, username string,
 }
 
 // deviceSendCommand = set the value for device
-func deviceSendCommand(deviceIDStr string, valueStr string) string {
+func deviceSendCommand(deviceIDStr string, valueStr string, textStr string) (string, int64, int64) {
 
 	deviceID := parseValidNumber(deviceIDStr)
 	value := parseValidNumber(valueStr)
@@ -330,29 +329,68 @@ func deviceSendCommand(deviceIDStr string, valueStr string) string {
 	for index := 0; index < len(deviceItems); index++ {
 		if deviceID == deviceItems[index].ID {
 			deviceItems[index].Value = value
+			deviceItems[index].Text = textStr
+			return "Device found", deviceID, value
 		}
 	}
 
-	return "no device"
+	return "no device", deviceID, value
 }
 
-func deviceGetValue(idStr string) (string, int64) {
+func deviceGetValue(idStr string) (string, int64, int64) {
 
 	deviceID := parseValidNumber(idStr)
 
 	for index := 0; index < len(deviceItems); index++ {
 		if deviceID == deviceItems[index].ID {
-			return "OK", deviceItems[index].Value
+			return "OK", deviceID, deviceItems[index].Value
 		}
 	}
 
 	var deviceItem = DeviceItem{ID: deviceID, Value: 0}
 	deviceItems = append(deviceItems, deviceItem)
 
-	return "missing", 0
+	return "missing", deviceID, 0
+}
+
+func deviceGetText(idStr string) (string, int64, string) {
+
+	deviceID := parseValidNumber(idStr)
+
+	for index := 0; index < len(deviceItems); index++ {
+		if deviceID == deviceItems[index].ID {
+			return "OK", deviceID, deviceItems[index].Text
+		}
+	}
+
+	var deviceItem = DeviceItem{ID: deviceID, Value: 0}
+	deviceItems = append(deviceItems, deviceItem)
+
+	return "missing", deviceID, "--"
+}
+
+func deviceGet(idStr string) (string, int64, int64, string) {
+
+	deviceID := parseValidNumber(idStr)
+
+	for index := 0; index < len(deviceItems); index++ {
+		if deviceID == deviceItems[index].ID {
+			return "OK", deviceID, deviceItems[index].Value, deviceItems[index].Text
+		}
+	}
+
+	var deviceItem = DeviceItem{ID: deviceID, Value: 0}
+	deviceItems = append(deviceItems, deviceItem)
+
+	return "missing", deviceID, 0, "--"
 }
 
 func parseValidNumber(numberStr string) int64 {
+
+	if numberStr == "" {
+		return 0
+	}
+
 	number, err := strconv.ParseInt(numberStr, 10, 64)
 	if err != nil {
 		fmt.Println(err)

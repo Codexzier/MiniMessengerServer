@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
-  <head>
+
+<head>
     <title>Mini Messenger Service</title>
 
     <style>
@@ -8,8 +9,9 @@
             vertical-align: text-top;
         }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <h1>Url requests</h1>
     <table>
         <tr>
@@ -23,11 +25,11 @@
         </tr>
         <tr>
             <td>
-                <p>[serveraddress]/getOnlineUser?userid=[user id]</p>
+                <p>[serveraddress]/getAllUsers?userid=[user id]</p>
             </td>
             <td>=</td>
             <td>
-                <p>get all online users</p>
+                <p>get all registered users</p>
                 <p>get username, user id and online state.</p>
             </td>
         </tr>
@@ -38,12 +40,12 @@
             <td>=</td>
             <td>
                 <p>get chat messages</p>
-<p>get sendet message from self and from other user</p>
+                <p>get sendet message from self and from other user</p>
             </td>
         </tr>
         <tr>
             <td>
-                <p>[serveraddress]/AddUser?username=[new or exist username]</p>
+                <p>[serveraddress]/addUser?username=[new or exist username]</p>
             </td>
             <td>=</td>
             <td>
@@ -79,7 +81,17 @@
                 <p>get the value for device.</p>
             </td>
         </tr>
+        <tr>
+            <td>
+                <p>[serveraddress]/deviceGetText?deviceid=[device id]</p>
+            </td>
+            <td>=</td>
+            <td>
+                <p>get the text for device.</p>
+            </td>
+        </tr>
     </table>
 
 </body>
+
 </html>
