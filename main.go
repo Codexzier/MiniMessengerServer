@@ -91,15 +91,15 @@ type ResponseDevices struct {
 }
 
 var userItems []UserItem = []UserItem{
-	UserItem{ID: 1, Username: "Admin", IsOnline: false},
+	{ID: 1, Username: "Admin", IsOnline: false},
 }
 
 var messengerItems []MessageItem = []MessageItem{
-	MessageItem{ID: 1, Text: "Test Message", UserID: 1, ToUserID: 1},
+	{ID: 1, Text: "Test Message", UserID: 1, ToUserID: 1},
 }
 
 var deviceItems []DeviceItem = []DeviceItem{
-	DeviceItem{ID: 0, Value: 0},
+	{ID: 0, Value: 0},
 }
 
 func main() {
