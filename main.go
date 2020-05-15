@@ -454,7 +454,7 @@ func getMessages(userIDStr string, toUserIDStr string) []MessageItem {
 	// if wemos1, return only the last message
 	if userID == 3 {
 		if len(resultItems) == 0 {
-			return []MessageItem{MessageItem{ID: 0, Text: "NO DATA"}}
+			return []MessageItem{{ID: 0, Text: "NO DATA"}}
 		}
 
 		return []MessageItem{resultItems[len(resultItems)-1]}
